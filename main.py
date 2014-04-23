@@ -25,10 +25,13 @@ class Index:
 		self.dir = dir
 
 	def add(self, doc):
+
+		# add documen to data dir
 		Utils.makedirs("data", doc.id)
 		with open("data/%s/text" % doc.id, 'w') as f:
 			f.write(doc.text)
 
+		# add words to index (ie create a link in word folder to data dir/doc.id)
 		for word in doc.text.split():
 			directory = Utils.after_each_character_insert(word, '/')
 			Utils.makedirs("index", directory)
@@ -37,7 +40,8 @@ class Index:
 			link = "index/%s/%s" % (directory, doc.id)
 			if not os.path.exists(link):
 				os.symlink(docPath, link)
-			else: print "to do: increment count from 0 if data was modified: " + link + ", for word: " + word
+			else: 
+				print "to do: increment count from 0 if data was modified: " + link + ", for word: " + word
 
 
     
