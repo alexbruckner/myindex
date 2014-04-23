@@ -30,8 +30,11 @@ class Index:
 
     def add(self, doc):
 
-        # add documen to data dir
-        Utils.makedirs("data", doc.id)
+        # add document to data dir
+        replace = Utils.makedirs("data", doc.id)
+
+        print replace
+
         with open("data/%s/text" % doc.id, 'w') as f:
             f.write(doc.text)
 
