@@ -33,11 +33,11 @@ class Index:
 			directory = Utils.after_each_character_insert(word, '/')
 			Utils.makedirs("index", directory)
 
-			link = "%s/data/%s" % (self.dir, doc.id)
-			docPath = "index/%s/%s" % (directory, doc.id)
+			docPath = "%s/data/%s" % (self.dir, doc.id)
+			link = "index/%s/%s" % (directory, doc.id)
 			if not os.path.exists(link):
-				os.symlink(link, docPath)
-
+				os.symlink(docPath, link)
+			else: print "to do: increment count from 0 if data was modified: " + link + ", for word: " + word
 
 
     
@@ -52,7 +52,7 @@ if __name__ == '__main__':
 
 	index = Index()
 	print "dir is %s" % index.dir
-	index.add(Document("test1", "top hat"))
+	index.add(Document("test1", "top hat hat"))
 	index.add(Document("test2", "top cat"))
 
 
