@@ -31,26 +31,30 @@ class Index:
     def add(self, doc):
 
         # add document to data dir
-        replace = Utils.makedirs("data", doc.id)
-
-        print replace
+        replace = not Utils.makedirs("data", doc.id)
 
         with open("data/%s/text" % doc.id, 'w') as f:
             f.write(doc.text)
+
+        docPath = "%s/data/%s" % (self.dir, doc.id)
+
+        Utils.makedirs(docPath, "words")
+        
+        # Utils.makedirs()
 
         # add words to index (ie create a link in word folder to data dir/doc.id)
         for word in doc.text.split():
             directory = Utils.after_each_character_insert(word, '/')
             Utils.makedirs("index", directory)
 
-            docPath = "%s/data/%s" % (self.dir, doc.id)
-            link = "index/%s/%s" % (directory, doc.id)
+            linkDir = "index/%s" % directory
+            link = "%s/%s" % (linkDir, doc.id)
+            
             if not os.path.exists(link):
                 os.symlink(docPath, link)
+                os.symlink("%s/%s" % (self.dir, linkDir), docPath + "/words/" + word)
             else: 
-                print "to do: increment count from 0 if data was modified: " + link + ", for word: " + word
-
-
+                print "to do: increment count from 1 if data was modified: " + link + ", for word: " + word
     
 class Document:
     def __init__(self, id, text):
