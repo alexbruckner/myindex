@@ -33,14 +33,27 @@ class Index:
         # add document to data dir
         replace = not Utils.makedirs("data", doc.id)
 
+        # write text to document folder
         with open("data/%s/text" % doc.id, 'w') as f:
             f.write(doc.text)
 
+        # the path to the document
         docPath = "%s/data/%s" % (self.dir, doc.id)
 
-        Utils.makedirs(docPath, "words")
-        
-        # Utils.makedirs()
+        # create words folder in document folder (this will hold the links to the index folders) 
+        if not replace: Utils.makedirs(docPath, "words")
+        # else traverse through words and remove link in index before indexing again, then do TF. 
+        else: 
+            wordsDir = docPath + "/words"
+            for word in os.listdir(wordsDir):
+                directory = Utils.after_each_character_insert(word, '/')
+                linkDir = "index/%s" % directory
+                link = "%s/%s" % (linkDir, doc.id)
+                # remove link
+                os.remove(link)
+                # remove word
+                os.remove("%s/%s" % (wordsDir, word))
+                
 
         # add words to index (ie create a link in word folder to data dir/doc.id)
         for word in doc.text.split():
@@ -51,7 +64,9 @@ class Index:
             link = "%s/%s" % (linkDir, doc.id)
             
             if not os.path.exists(link):
+                # symlink document match back to document [index -> data]
                 os.symlink(docPath, link)
+                # symlink document word to index location [data -> index]
                 os.symlink("%s/%s" % (self.dir, linkDir), docPath + "/words/" + word)
             else: 
                 print "to do: increment count from 1 if data was modified: " + link + ", for word: " + word
