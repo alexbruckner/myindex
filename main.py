@@ -1,4 +1,4 @@
-import os
+import os, sys, re
 
 class Utils:
     @staticmethod
@@ -22,6 +22,11 @@ class Utils:
         
         return ok
 
+    @staticmethod
+    def purge(dir, pattern):
+        for f in os.listdir(dir):
+            if re.search(pattern, f):
+                os.remove(os.path.join(dir, f))
 
 
 class Index:
@@ -51,7 +56,13 @@ class Index:
 
     @staticmethod
     def addToIndex(root, doc, docPath):
+
+        count = {}
+
         for word in doc.text.split():
+
+            count[word] = 1
+
             directory = Utils.after_each_character_insert(word, '/')
             Utils.makedirs("index", directory)
 
@@ -64,7 +75,17 @@ class Index:
                 # symlink document word to index location [data -> index]
                 os.symlink("%s/%s" % (root, linkDir), docPath + "/words/" + word)
             else: 
-                print "to do: increment count from 1 if data was modified: " + link + ", for word: " + word
+                # TODO increment count by 1 
+                count[word] = count[word] + 1
+
+        for entry in count:
+            try:
+                directory = Utils.after_each_character_insert(entry, '/')
+                linkDir = "index/%s" % directory
+                link = "%s/%s-%s=>%s" % (linkDir, 100000000000000000 - count[entry], count[entry], doc.id)
+                os.symlink(doc.id, link)
+            except OSError as error: print error, doc.id, "%s/%s-%s=>%s" % (linkDir, 100000000000000000 - count[entry], count[entry], doc.id)
+
 
     @staticmethod
     def removeFromIndex(docPath, id):
@@ -73,8 +94,13 @@ class Index:
             directory = Utils.after_each_character_insert(word, '/')
             linkDir = "index/%s" % directory
             link = "%s/%s" % (linkDir, id)
+            
             # remove link
             os.remove(link)
+
+            # remove count
+            Utils.purge(linkDir, "^.*.=>" + id + "$")
+
             # remove word
             os.remove("%s/%s" % (wordsDir, word))
     
@@ -90,7 +116,7 @@ if __name__ == '__main__':
     index = Index()
     print "dir is %s" % index.dir
     index.add(Document("test1", "top hat hat"))
-    index.add(Document("test2", "top cat"))
+    index.add(Document("test2", "top top cat"))
 
 
 
