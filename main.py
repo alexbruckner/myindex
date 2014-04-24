@@ -1,4 +1,4 @@
-import os, sys, re
+import os, sys, re, glob
 
 class Utils:
     @staticmethod
@@ -53,6 +53,16 @@ class Index:
 
         # add words to index (ie create a link in word folder to data dir/doc.id)
         Index.addToIndex(self.dir, doc, docPath)
+
+
+    # assume query to be one word for now
+    def search(self, query):
+        directory = Utils.after_each_character_insert(query, '/')
+        linkDir = "index/%s" % directory
+        result = []
+        for link in glob.glob(linkDir + "/*=>*"):
+            result.append(link[link.index("=>") + 2 :])
+        return result
 
     @staticmethod
     def addToIndex(root, doc, docPath):
@@ -115,8 +125,13 @@ if __name__ == '__main__':
 
     index = Index()
     print "dir is %s" % index.dir
-    index.add(Document("test1", "top hat hat"))
+    index.add(Document("test1", "top hat hat")) # TODO upper case 
     index.add(Document("test2", "top top cat"))
+
+    print "top", index.search("top")
+    print "hat", index.search("hat")
+    print "cat", index.search("cat")
+    print "-", index.search("-")
 
 
 
