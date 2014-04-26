@@ -1,4 +1,6 @@
-import os, sys, re, glob
+import os, sys, re, glob, logging
+
+log = logging.getLogger('myindex')
 
 class Utils:
     @staticmethod
@@ -13,13 +15,11 @@ class Utils:
 
 
     @staticmethod
-    def makedirs(root, directory):
-        directory = root + "/" + directory
+    def makedirs(directory):
         ok = False
         if not os.path.exists(directory):
                 os.makedirs(directory)
                 ok = True
-        
         return ok
 
     @staticmethod
@@ -29,30 +29,52 @@ class Utils:
                 os.remove(os.path.join(dir, f))
 
 
-class Index:
-    def __init__(self, dir = os.getcwd()):
-        self.dir = dir
+class Document:
+    def __init__(self, id, text):
+        self.id = id
+        self.text = text
 
-    def add(self, doc):
+class IndexDocument():
+    def __init__(self, index, doc):
+        self.index = index
+        self.doc = doc
+        self.dir = os.path.join(index.data_dir, self.doc.id)
+
+class Index:
+    def __init__(self):
+        self.dir = os.getcwd()
+        self.data_dir = os.path.join(self.dir, "data")
+        self.index_dir = os.path.join(self.dir, "index")
+        # create data dir
+
+        Utils.makedirs(self.data_dir)
+
+        # create index dir
+        Utils.makedirs(self.index_dir)
+
+
+    def add(self, docc):
+
+        indexDoc = IndexDocument(self, docc)
 
         # add document to data dir
-        replace = not Utils.makedirs("data", doc.id)
+        replace = not Utils.makedirs(indexDoc.dir)
 
         # write text to document folder
-        with open("data/%s/text" % doc.id, 'w') as f:
-            f.write(doc.text)
+        with open("data/%s/text" % indexDoc.doc.id, 'w') as f:
+            f.write(indexDoc.doc.text)
 
         # the path to the document
-        docPath = "%s/data/%s" % (self.dir, doc.id)
+        docPath = "%s/data/%s" % (self.dir, indexDoc.doc.id)
 
         # create words folder in document folder (this will hold the links to the index folders) 
         if not replace: Utils.makedirs(docPath, "words")
         # else traverse through words and remove link in index before indexing again, then do TF. 
         else: 
-            Index.removeFromIndex(docPath, doc.id)
+            Index.removeFromIndex(docPath, indexDoc.doc.id)
 
         # add words to index (ie create a link in word folder to data dir/doc.id)
-        Index.addToIndex(self.dir, doc, docPath)
+        Index.addToIndex(self.dir, indexDoc.doc, docPath)
 
 
     # assume query to be one word for now
@@ -74,7 +96,7 @@ class Index:
             count[word] = 1
 
             directory = Utils.after_each_character_insert(word, '/')
-            Utils.makedirs("index", directory)
+            Utils.makedirs("index/" + directory)
 
             linkDir = "index/%s" % directory
             link = "%s/%s" % (linkDir, doc.id)
@@ -114,10 +136,7 @@ class Index:
             # remove word
             os.remove("%s/%s" % (wordsDir, word))
     
-class Document:
-    def __init__(self, id, text):
-        self.id = id
-        self.text = text
+
 
 
 # simple test
@@ -125,7 +144,20 @@ if __name__ == '__main__':
 
     index = Index()
     print "dir is %s" % index.dir
+
+
+    # TODO move LOGGING into config
+    FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    logging.basicConfig(format=FORMAT)
+    log.setLevel("DEBUG")
+    log.debug("test")
+
+
+
+
+    log.debug("adding test1 document with text: top hat hat")
     index.add(Document("test1", "top hat hat")) # TODO upper case 
+    log.debug("adding test2 document with text: top top cat")
     index.add(Document("test2", "top top cat"))
 
     print "top", index.search("top")
