@@ -196,20 +196,14 @@ if __name__ == '__main__':
     print
     print "top [with highlight, size 10]", index.search("top", highlight = True, size = 10)
     print
-    print "top [with highlight, size = -1]", index.search("top", highlight = True, size = -1)
-
-    print
     print "cat [with highlight, size = -1]", index.search("cat", highlight = True, size = -1)
 
-
-
  
+ # TODO paging
+ # TODO strip html tags and test with html/xml files
+ # TODO add local files (encode file path as id)
  # TODO filter queries
  # TODO parent-child relationships
- # TODO paging
- # TODO add local files (encode file path as id)
- # TODO test with html/xml files
-
 
 
 
