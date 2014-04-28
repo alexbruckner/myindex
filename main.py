@@ -78,7 +78,7 @@ class Index:
 
     # assume query to be one word for now TODO find docs as well as fields matched!!!
     def search(self, query, field = None):
-        directory = Utils.pathify(query)
+        directory = Utils.pathify(query.lower())
         linkDir = "%s/index/%s" % (index.dir, directory)
         result = {}
 
@@ -106,7 +106,7 @@ class Index:
         aplhanumericOnlyPattern = re.compile('[\W_]+', re.UNICODE)
         alphaNuymOnly = re.sub(aplhanumericOnlyPattern, ' ', words)
 
-        for word in alphaNuymOnly.split():
+        for word in alphaNuymOnly.lower().split():
 
             count[word] = 1
 
@@ -129,7 +129,7 @@ class Index:
 
         for entry in count:
             try:
-                directory = Utils.pathify(entry)
+                directory = Utils.pathify(entry.lower())
                 linkDir = "%s/index/%s/#%s" % (index.dir, directory, field)
                 link = "%s/%s-%s=>%s" % (linkDir, 100000000000000000 - count[entry], count[entry], indexDoc.doc.id)
                 os.symlink(indexDoc.doc.id, link)
@@ -141,7 +141,7 @@ class Index:
         wordsDir = "%s/#%s/words" % (indexDoc.dir, field)
         if os.path.exists(wordsDir):
             for word in os.listdir(wordsDir):
-                directory = Utils.pathify(word)
+                directory = Utils.pathify(word.lower())
                 linkDir = "%s/index/%s/#%s" % (index.dir, directory, field)
                 link = "%s/%s" % (linkDir, indexDoc.doc.id)
                 
