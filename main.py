@@ -77,13 +77,24 @@ class Index:
 
 
     # assume query to be one word for now TODO find docs as well as fields matched!!!
-    def search(self, query):
+    def search(self, query, field = None):
         directory = Utils.pathify(query)
-        field = "text"
-        linkDir = "%s/index/%s/#%s" % (index.dir, directory, field)
-        result = []
-        for link in glob.glob(linkDir + "/*=>*"):
-            result.append(link[link.index("=>") + 2 :])
+        linkDir = "%s/index/%s" % (index.dir, directory)
+        result = {}
+
+        pattern = linkDir + "/#*/*=>*"
+
+        if field:
+            pattern = linkDir + "/#%s/*=>*" % field
+
+        for link in glob.glob(pattern):
+            matchStart = link.index("#") + 1
+            match = link[ matchStart : link.index("/", matchStart)]
+            docMatch = link[link.index("=>") + 2 :]
+            if not match in result:
+                result[match] = []
+            result[match].append(docMatch)
+            
         return result
 
     @staticmethod
@@ -163,5 +174,7 @@ if __name__ == '__main__':
     print "top", index.search("top")
     print "hat", index.search("hat")
     print "cat", index.search("cat")
+    print "cat", index.search("cat", "myfield")
+    
     print "-", index.search("-")
  
