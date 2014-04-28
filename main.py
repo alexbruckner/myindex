@@ -3,6 +3,7 @@ import os, sys, re, glob, logging
 log = logging.getLogger('myindex')
 
 class Utils:
+    
     @staticmethod
     def pathify(word, char = '/'):        
         return char.join([c for c in word])
@@ -46,9 +47,9 @@ class Index:
         Utils.makedirs(self.index_dir)
 
 
-    def add(self, docc):
+    def add(self, doc):
 
-        indexDoc = IndexDocument(self, docc)
+        indexDoc = IndexDocument(self, doc)
 
         # add document to data dir
         replace = not Utils.makedirs(indexDoc.dir)
@@ -67,7 +68,7 @@ class Index:
             Index.removeFromIndex(indexDoc)
 
         # add words to index (ie create a link in word folder to data dir/doc.id)
-        Index.addToIndex(self.dir, indexDoc.doc, indexDoc.dir)
+        Index.addToIndex(indexDoc)
 
 
     # assume query to be one word for now
@@ -80,25 +81,25 @@ class Index:
         return result
 
     @staticmethod
-    def addToIndex(root, doc, docPath):
+    def addToIndex(indexDoc):
 
         count = {}
 
-        for word in doc.text.split():
+        for word in indexDoc.doc.text.split():
 
             count[word] = 1
 
             directory = Utils.pathify(word)
             Utils.makedirs("index/" + directory)
 
-            linkDir = "index/%s" % directory
-            link = "%s/%s" % (linkDir, doc.id)
+            linkDir = "%s/index/%s" % (index.dir, directory)
+            link = "%s/%s" % (linkDir, indexDoc.doc.id)
             
             if not os.path.exists(link):
                 # symlink document match back to document [index -> data]
-                os.symlink(docPath, link)
+                os.symlink(indexDoc.dir, link)
                 # symlink document word to index location [data -> index]
-                os.symlink("%s/%s" % (root, linkDir), docPath + "/words/" + word)
+                os.symlink(linkDir, indexDoc.dir + "/words/" + word)
             else: 
                 # TODO increment count by 1 
                 count[word] = count[word] + 1
@@ -106,10 +107,10 @@ class Index:
         for entry in count:
             try:
                 directory = Utils.pathify(entry)
-                linkDir = "index/%s" % directory
-                link = "%s/%s-%s=>%s" % (linkDir, 100000000000000000 - count[entry], count[entry], doc.id)
-                os.symlink(doc.id, link)
-            except OSError as error: print error, doc.id, "%s/%s-%s=>%s" % (linkDir, 100000000000000000 - count[entry], count[entry], doc.id)
+                linkDir = "%s/index/%s" % (index.dir, directory)
+                link = "%s/%s-%s=>%s" % (linkDir, 100000000000000000 - count[entry], count[entry], indexDoc.doc.id)
+                os.symlink(indexDoc.doc.id, link)
+            except OSError as error: print error, indexDoc.doc.id, "%s/%s-%s=>%s" % (linkDir, 100000000000000000 - count[entry], count[entry], indexDoc.doc.id)
 
 
     @staticmethod
