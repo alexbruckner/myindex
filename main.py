@@ -110,7 +110,7 @@ class Index:
                 linkDir = "%s/index/%s" % (index.dir, directory)
                 link = "%s/%s-%s=>%s" % (linkDir, 100000000000000000 - count[entry], count[entry], indexDoc.doc.id)
                 os.symlink(indexDoc.doc.id, link)
-            except OSError as error: print error, indexDoc.doc.id, "%s/%s-%s=>%s" % (linkDir, 100000000000000000 - count[entry], count[entry], indexDoc.doc.id)
+            except OSError as error: print error, indexDoc.doc.id, link
 
 
     @staticmethod
@@ -145,9 +145,6 @@ if __name__ == '__main__':
     FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     logging.basicConfig(format=FORMAT)
     log.setLevel("DEBUG")
-    log.debug("test")
-
-
 
 
     log.debug("adding test1 document with text: top hat hat")
@@ -159,7 +156,4 @@ if __name__ == '__main__':
     print "hat", index.search("hat")
     print "cat", index.search("cat")
     print "-", index.search("-")
-
-    print re.sub(".", ".", "abc")
-
  
