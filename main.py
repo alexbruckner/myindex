@@ -51,75 +51,77 @@ class Index:
 
         indexDoc = IndexDocument(self, doc)
 
+        field = "text"
+
         # add document to data dir
-        replace = not Utils.makedirs(indexDoc.dir)
-
+        replace = not Utils.makedirs("%s/#%s" % (indexDoc.dir, field))
+        
         # write text to document folder
-        with open("data/%s/text" % indexDoc.doc.id, 'w') as f:
-            f.write(indexDoc.doc.text)
-
-        # the path to the document
-        # docPath = "%s/data/%s" % (self.dir, indexDoc.doc.id)
+        with open("data/%s/#%s/text" % (indexDoc.doc.id, field), 'w') as f:
+            f.write(indexDoc.doc.text) # todo doc.<field>
 
         # create words folder in document folder (this will hold the links to the index folders) 
-        if not replace: Utils.makedirs(indexDoc.dir +  "/words")
+        if not replace: Utils.makedirs("%s/#%s/words" % (indexDoc.dir, field))
         # else traverse through words and remove link in index before indexing again, then do TF. 
         else: 
-            Index.removeFromIndex(indexDoc)
+            Index.removeFromIndex(indexDoc, field)
 
         # add words to index (ie create a link in word folder to data dir/doc.id)
-        Index.addToIndex(indexDoc)
+        Index.addToIndex(indexDoc, field)
 
 
     # assume query to be one word for now
     def search(self, query):
         directory = Utils.pathify(query)
-        linkDir = "index/%s" % directory
+        field = "text"
+        linkDir = "%s/index/%s/#%s" % (index.dir, directory, field)
         result = []
         for link in glob.glob(linkDir + "/*=>*"):
             result.append(link[link.index("=>") + 2 :])
         return result
 
     @staticmethod
-    def addToIndex(indexDoc):
+    def addToIndex(indexDoc, field):
 
         count = {}
 
-        for word in indexDoc.doc.text.split():
+        for word in indexDoc.doc.text.split(): # todo doc.getfield("text")
 
             count[word] = 1
 
             directory = Utils.pathify(word)
-            Utils.makedirs("index/" + directory)
 
-            linkDir = "%s/index/%s" % (index.dir, directory)
+            linkDir = "%s/index/%s/#%s" % (index.dir, directory, field)
+
+            Utils.makedirs(linkDir)
+
             link = "%s/%s" % (linkDir, indexDoc.doc.id)
             
             if not os.path.exists(link):
                 # symlink document match back to document [index -> data]
                 os.symlink(indexDoc.dir, link)
                 # symlink document word to index location [data -> index]
-                os.symlink(linkDir, indexDoc.dir + "/words/" + word)
+                os.symlink(linkDir, "%s/#%s/words/%s" % (indexDoc.dir, field, word))
             else: 
-                # TODO increment count by 1 
+                # increment count by 1 
                 count[word] = count[word] + 1
 
         for entry in count:
             try:
                 directory = Utils.pathify(entry)
-                linkDir = "%s/index/%s" % (index.dir, directory)
+                linkDir = "%s/index/%s/#%s" % (index.dir, directory, field)
                 link = "%s/%s-%s=>%s" % (linkDir, 100000000000000000 - count[entry], count[entry], indexDoc.doc.id)
                 os.symlink(indexDoc.doc.id, link)
             except OSError as error: print error, indexDoc.doc.id, link
 
 
     @staticmethod
-    def removeFromIndex(indexDoc):
-        wordsDir = indexDoc.dir + "/words"
+    def removeFromIndex(indexDoc, field):
+        wordsDir = "%s/#%s/words" % (indexDoc.dir, field)
         if os.path.exists(wordsDir):
             for word in os.listdir(wordsDir):
                 directory = Utils.pathify(word)
-                linkDir = "index/%s" % directory
+                linkDir = "%s/index/%s/#%s" % (index.dir, directory, field)
                 link = "%s/%s" % (linkDir, indexDoc.doc.id)
                 
                 # remove link
@@ -148,7 +150,7 @@ if __name__ == '__main__':
 
 
     log.debug("adding test1 document with text: top hat hat")
-    index.add(Document("test1", "top hat hat")) # TODO upper case 
+    index.add(Document("test1", "top hat hat")) 
     log.debug("adding test2 document with text: top top cat")
     index.add(Document("test2", "top top cat"))
 
