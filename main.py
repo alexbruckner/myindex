@@ -25,8 +25,10 @@ class Utils:
 
 class Document:
     def __init__(self, id, text):
+        self.vals = {}
         self.id = id
-        self.text = text
+        self.vals["text"] = text
+
 
 class IndexDocument():
     def __init__(self, index, doc):
@@ -39,8 +41,8 @@ class Index:
         self.dir = os.getcwd()
         self.data_dir = os.path.join(self.dir, "data")
         self.index_dir = os.path.join(self.dir, "index")
-        # create data dir
 
+        # create data dir
         Utils.makedirs(self.data_dir)
 
         # create index dir
@@ -58,7 +60,7 @@ class Index:
         
         # write text to document folder
         with open("data/%s/#%s/text" % (indexDoc.doc.id, field), 'w') as f:
-            f.write(indexDoc.doc.text) # todo doc.<field>
+            f.write(indexDoc.doc.vals[field])
 
         # create words folder in document folder (this will hold the links to the index folders) 
         if not replace: Utils.makedirs("%s/#%s/words" % (indexDoc.dir, field))
@@ -85,7 +87,7 @@ class Index:
 
         count = {}
 
-        for word in indexDoc.doc.text.split(): # todo doc.getfield("text")
+        for word in indexDoc.doc.vals[field].split():
 
             count[word] = 1
 
