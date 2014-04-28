@@ -105,8 +105,9 @@ class Index:
         path = "%s/%s/#%s/text"  % (self.data_dir, docId, field)
         with open (path, "r") as f:
             text = f.read()
-            index = max(0, text.index(query))
-            text = "...%s..." % text[index : min(size, len(text))] # TODO check bounds ...
+            if size != -1:
+                index = max(0, text.index(query))
+                text = "...%s..." % text[index : min(size, len(text))] # TODO check bounds ...
             return text.replace(query, "%s%s%s" % ("<em class=\"highlight\">", query, "</em>"))
 
     @staticmethod
@@ -193,6 +194,10 @@ if __name__ == '__main__':
     print "cat [myfield only]", index.search("cat", field = "myfield")
     print
     print "top [with highlight, size 10]", index.search("top", highlight = True, size = 10)
+    print
+    print "top [with highlight, size = -1]", index.search("top", highlight = True, size = -1)
+
+    
 
 
  # TODO filter queries
