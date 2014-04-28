@@ -4,15 +4,8 @@ log = logging.getLogger('myindex')
 
 class Utils:
     @staticmethod
-    def after_each_character_insert(word, char):        
-        path = list()
-        for (i, c) in enumerate(word):
-            path.append(c)
-            if i >= 0 and i < len(word) - 1:
-                path.append(char)
-
-        return ''.join(path)
-
+    def pathify(word, char = '/'):        
+        return char.join([c for c in word])
 
     @staticmethod
     def makedirs(directory):
@@ -65,21 +58,21 @@ class Index:
             f.write(indexDoc.doc.text)
 
         # the path to the document
-        docPath = "%s/data/%s" % (self.dir, indexDoc.doc.id)
+        # docPath = "%s/data/%s" % (self.dir, indexDoc.doc.id)
 
         # create words folder in document folder (this will hold the links to the index folders) 
-        if not replace: Utils.makedirs(docPath, "words")
+        if not replace: Utils.makedirs(indexDoc.dir +  "/words")
         # else traverse through words and remove link in index before indexing again, then do TF. 
         else: 
-            Index.removeFromIndex(docPath, indexDoc.doc.id)
+            Index.removeFromIndex(indexDoc)
 
         # add words to index (ie create a link in word folder to data dir/doc.id)
-        Index.addToIndex(self.dir, indexDoc.doc, docPath)
+        Index.addToIndex(self.dir, indexDoc.doc, indexDoc.dir)
 
 
     # assume query to be one word for now
     def search(self, query):
-        directory = Utils.after_each_character_insert(query, '/')
+        directory = Utils.pathify(query)
         linkDir = "index/%s" % directory
         result = []
         for link in glob.glob(linkDir + "/*=>*"):
@@ -95,7 +88,7 @@ class Index:
 
             count[word] = 1
 
-            directory = Utils.after_each_character_insert(word, '/')
+            directory = Utils.pathify(word)
             Utils.makedirs("index/" + directory)
 
             linkDir = "index/%s" % directory
@@ -112,7 +105,7 @@ class Index:
 
         for entry in count:
             try:
-                directory = Utils.after_each_character_insert(entry, '/')
+                directory = Utils.pathify(entry)
                 linkDir = "index/%s" % directory
                 link = "%s/%s-%s=>%s" % (linkDir, 100000000000000000 - count[entry], count[entry], doc.id)
                 os.symlink(doc.id, link)
@@ -120,21 +113,22 @@ class Index:
 
 
     @staticmethod
-    def removeFromIndex(docPath, id):
-        wordsDir = docPath + "/words"
-        for word in os.listdir(wordsDir):
-            directory = Utils.after_each_character_insert(word, '/')
-            linkDir = "index/%s" % directory
-            link = "%s/%s" % (linkDir, id)
-            
-            # remove link
-            os.remove(link)
+    def removeFromIndex(indexDoc):
+        wordsDir = indexDoc.dir + "/words"
+        if os.path.exists(wordsDir):
+            for word in os.listdir(wordsDir):
+                directory = Utils.pathify(word)
+                linkDir = "index/%s" % directory
+                link = "%s/%s" % (linkDir, indexDoc.doc.id)
+                
+                # remove link
+                os.remove(link)
 
-            # remove count
-            Utils.purge(linkDir, "^.*.=>" + id + "$")
+                # remove count
+                Utils.purge(linkDir, "^.*.=>" + indexDoc.doc.id + "$")
 
-            # remove word
-            os.remove("%s/%s" % (wordsDir, word))
+                # remove word
+                os.remove("%s/%s" % (wordsDir, word))
     
 
 
@@ -165,7 +159,6 @@ if __name__ == '__main__':
     print "cat", index.search("cat")
     print "-", index.search("-")
 
+    print re.sub(".", ".", "abc")
 
-
-
-
+ 
