@@ -1,4 +1,4 @@
-import os, sys, re, glob, logging
+import os, sys, re, glob, logging, string
 
 log = logging.getLogger('myindex')
 
@@ -102,7 +102,11 @@ class Index:
 
         count = {}
 
-        for word in indexDoc.doc.vals[field].split():
+        words = indexDoc.doc.vals[field]
+        aplhanumericOnlyPattern = re.compile('[\W_]+', re.UNICODE)
+        alphaNuymOnly = re.sub(aplhanumericOnlyPattern, ' ', words)
+
+        for word in alphaNuymOnly.split():
 
             count[word] = 1
 
@@ -167,7 +171,7 @@ if __name__ == '__main__':
 
 
     log.debug("adding test1 document with text: top hat hat")
-    index.add(Document("test1", "top hat hat").add("myfield", "my cat")) 
+    index.add(Document("test1", "top hat hat").add("myfield", "mY, ,CAt.")) 
     log.debug("adding test2 document with text: top top cat")
     index.add(Document("test2", "top top cat"))
 
@@ -178,3 +182,7 @@ if __name__ == '__main__':
     
     print "-", index.search("-")
  
+
+
+
+
