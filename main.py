@@ -77,7 +77,7 @@ class Index:
 
 
     # assume query to be one word for now - TODO
-    def search(self, query, field = None, highlight = False):
+    def search(self, query, field = None, highlight = False, size = 300):
         directory = Utils.pathify(query.lower())
         linkDir = "%s/index/%s" % (index.dir, directory)
         result = {}
@@ -94,17 +94,19 @@ class Index:
             if not match in result:
                 result[match] = []
             if highlight:
-                docMatch = (docMatch, self.snippet(docMatch, match, query))    
+                docMatch = (docMatch, self.snippet(docMatch, match, query, size))    
             result[match].append(docMatch)
             
         return result
 
     
-    def snippet(self, docId, field, query, size = 7):
+    def snippet(self, docId, field, query, size):
         # TODO default snippet size 
         path = "%s/%s/#%s/text"  % (self.data_dir, docId, field)
         with open (path, "r") as f:
             text = f.read()
+            index = max(0, text.index(query))
+            text = "...%s..." % text[index : min(size, len(text))] # TODO check bounds ...
             return text.replace(query, "%s%s%s" % ("<em class=\"highlight\">", query, "</em>"))
 
     @staticmethod
@@ -165,8 +167,6 @@ class Index:
                 os.remove("%s/%s" % (wordsDir, word))
     
 
-
-
 # simple test
 if __name__ == '__main__':
 
@@ -192,17 +192,12 @@ if __name__ == '__main__':
     print
     print "cat [myfield only]", index.search("cat", field = "myfield")
     print
-    print "top [with highlight]", index.search("top", highlight = True)
+    print "top [with highlight, size 10]", index.search("top", highlight = True, size = 10)
 
- 
- # TODO text snippets with highlighting
+
  # TODO filter queries
  # TODO parent-child relationships
  # TODO paging
-
-
-
-
 
 
 
