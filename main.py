@@ -29,6 +29,10 @@ class Document:
         self.id = id
         self.vals["text"] = text
 
+    def add(self, field, value):
+        self.vals[field] = value
+        return self
+
 
 class IndexDocument():
     def __init__(self, index, doc):
@@ -53,26 +57,26 @@ class Index:
 
         indexDoc = IndexDocument(self, doc)
 
-        field = "text"
+        for field in indexDoc.doc.vals:
 
-        # add document to data dir
-        replace = not Utils.makedirs("%s/#%s" % (indexDoc.dir, field))
-        
-        # write text to document folder
-        with open("data/%s/#%s/text" % (indexDoc.doc.id, field), 'w') as f:
-            f.write(indexDoc.doc.vals[field])
+            # add document to data dir
+            replace = not Utils.makedirs("%s/#%s" % (indexDoc.dir, field))
+            
+            # write text to document folder
+            with open("data/%s/#%s/text" % (indexDoc.doc.id, field), 'w') as f:
+                f.write(indexDoc.doc.vals[field])
 
-        # create words folder in document folder (this will hold the links to the index folders) 
-        if not replace: Utils.makedirs("%s/#%s/words" % (indexDoc.dir, field))
-        # else traverse through words and remove link in index before indexing again, then do TF. 
-        else: 
-            Index.removeFromIndex(indexDoc, field)
+            # create words folder in document folder (this will hold the links to the index folders) 
+            if not replace: Utils.makedirs("%s/#%s/words" % (indexDoc.dir, field))
+            # else traverse through words and remove link in index before indexing again, then do TF. 
+            else: 
+                Index.removeFromIndex(indexDoc, field)
 
-        # add words to index (ie create a link in word folder to data dir/doc.id)
-        Index.addToIndex(indexDoc, field)
+            # add words to index (ie create a link in word folder to data dir/doc.id)
+            Index.addToIndex(indexDoc, field)
 
 
-    # assume query to be one word for now
+    # assume query to be one word for now TODO find docs as well as fields matched!!!
     def search(self, query):
         directory = Utils.pathify(query)
         field = "text"
@@ -152,7 +156,7 @@ if __name__ == '__main__':
 
 
     log.debug("adding test1 document with text: top hat hat")
-    index.add(Document("test1", "top hat hat")) 
+    index.add(Document("test1", "top hat hat").add("myfield", "my cat")) 
     log.debug("adding test2 document with text: top top cat")
     index.add(Document("test2", "top top cat"))
 
