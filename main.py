@@ -76,16 +76,16 @@ class Index:
             Index.addToIndex(indexDoc, field)
 
 
-    # assume query to be one word for now TODO find docs as well as fields matched!!!
-    def search(self, query, field = None):
+    # assume query to be one word for now - TODO
+    def search(self, query, field = None, highlight = False):
         directory = Utils.pathify(query.lower())
         linkDir = "%s/index/%s" % (index.dir, directory)
         result = {}
 
-        pattern = linkDir + "/#*/*=>*"
+        pattern = "%s/#*/*=>*" % linkDir
 
         if field:
-            pattern = linkDir + "/#%s/*=>*" % field
+            pattern = "%s/#%s/*=>*" % (linkDir, field)
 
         for link in glob.glob(pattern):
             matchStart = link.index("#") + 1
@@ -93,9 +93,19 @@ class Index:
             docMatch = link[link.index("=>") + 2 :]
             if not match in result:
                 result[match] = []
+            if highlight:
+                docMatch = (docMatch, self.snippet(docMatch, match, query))    
             result[match].append(docMatch)
             
         return result
+
+    
+    def snippet(self, docId, field, query, size = 7):
+        # TODO default snippet size 
+        path = "%s/%s/#%s/text"  % (self.data_dir, docId, field)
+        with open (path, "r") as f:
+            text = f.read()
+            return text.replace(query, "%s%s%s" % ("<em class=\"highlight\">", query, "</em>"))
 
     @staticmethod
     def addToIndex(indexDoc, field):
@@ -170,7 +180,7 @@ if __name__ == '__main__':
     log.setLevel("DEBUG")
 
 
-    log.debug("adding test1 document with text: top hat hat")
+    log.debug("adding test1 document with text: top hat hat and myfield: mY, ,CAt.")
     index.add(Document("test1", "top hat hat").add("myfield", "mY, ,CAt.")) 
     log.debug("adding test2 document with text: top top cat")
     index.add(Document("test2", "top top cat"))
@@ -178,10 +188,20 @@ if __name__ == '__main__':
     print "top", index.search("top")
     print "hat", index.search("hat")
     print "cat", index.search("cat")
-    print "cat", index.search("cat", "myfield")
-    
     print "-", index.search("-")
+    print
+    print "cat [myfield only]", index.search("cat", field = "myfield")
+    print
+    print "top [with highlight]", index.search("top", highlight = True)
+
  
+ # TODO text snippets with highlighting
+ # TODO filter queries
+ # TODO parent-child relationships
+ # TODO paging
+
+
+
 
 
 
