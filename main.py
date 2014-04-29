@@ -106,10 +106,11 @@ class Index:
         path = "%s/%s/#%s/text"  % (self.data_dir, docId, field)
         with open (path, "r") as f:
             text = f.read()
+            text = re.sub('<[^<]+?>', ' ', text)
             if size != -1:
                 index = max(0, re.search(query, text, re.IGNORECASE).span()[0])
                 text = "...%s..." % text[index : min(size, len(text))] # TODO check bounds ...
-            return re.sub("(?i)(%s)" % query, r'<em class="hightlight">\1</em>', re.sub('<[^<]+?>', ' ', text))
+            return re.sub("(?i)(%s)" % query, r'<em class="hightlight">\1</em>', text)
 
     @staticmethod
     def addToIndex(indexDoc, field):
@@ -211,11 +212,12 @@ if __name__ == '__main__':
     index.add(Document("test3", "<p>this is a paragraph</p><p class=\"class\">class: This is \nanother paragraph</p>").add("type", "entry")) 
  
     print
-    print "class [with highlight]", index.search("class", highlight = True, size = -1)
+    print "class [with highlight]", index.search("class", highlight = True)
 
 
- # TODO add local files (encode file path as id)
+ # TODO option to return documents with original field texts
  # TODO filter queries
+ # TODO add local files (encode file path as id)
  # TODO exact phrases
  # TODO multipe search words
  # TODO parent-child relationships
