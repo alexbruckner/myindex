@@ -88,7 +88,7 @@ class Index:
             pattern = "%s/#%s/*=>*" % (linkDir, field)
 
         for i, link in enumerate(glob.glob(pattern)):
-            if paging == -1 or (paging != -1 and (i >= start and i < start + paging)):
+            if paging == -1 or (i >= start and i < start + paging):
                 matchStart = link.index("#") + 1
                 match = link[ matchStart : link.index("/", matchStart)]
                 docMatch = link[link.index("=>") + 2 :]
@@ -109,7 +109,7 @@ class Index:
             if size != -1:
                 index = max(0, re.search(query, text, re.IGNORECASE).span()[0])
                 text = "...%s..." % text[index : min(size, len(text))] # TODO check bounds ...
-            return re.sub("(?i)(%s)" % query, r'<em class="hightlight">\1</em>', text)
+            return re.sub("(?i)(%s)" % query, r'<em class="hightlight">\1</em>', re.sub('<[^<]+?>', ' ', text))
 
     @staticmethod
     def addToIndex(indexDoc, field):
@@ -117,6 +117,10 @@ class Index:
         count = {}
 
         words = indexDoc.doc.vals[field]
+
+        # strip html tags
+        words = re.sub('<[^<]+?>', ' ', words)
+
         aplhanumericOnlyPattern = re.compile('[\W_]+', re.UNICODE)
         alphaNuymOnly = re.sub(aplhanumericOnlyPattern, ' ', words)
 
@@ -201,8 +205,15 @@ if __name__ == '__main__':
     print "cat [paging = 1]", index.search("cat", paging = 1)
     print
     print "cat [paging = 1, start = 1]", index.search("cat", paging = 1, start = 1)
+    print
  
- # TODO strip html tags and test with html/xml files
+    log.debug("adding test3 html document with text: <p>this is a paragraph</p><p class=\"class\">class: This is \nanother paragraph</p> anbd type: entry.")
+    index.add(Document("test3", "<p>this is a paragraph</p><p class=\"class\">class: This is \nanother paragraph</p>").add("type", "entry")) 
+ 
+    print
+    print "class [with highlight]", index.search("class", highlight = True, size = -1)
+
+
  # TODO add local files (encode file path as id)
  # TODO filter queries
  # TODO exact phrases
