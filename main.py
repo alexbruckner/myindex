@@ -77,7 +77,7 @@ class Index:
 
 
     # assume query to be one word for now - TODO
-    def search(self, query, field = None, highlight = False, size = 300):
+    def search(self, query, field = None, highlight = False, size = 300, paging = -1, start = 0):
         directory = Utils.pathify(query.lower())
         linkDir = "%s/index/%s" % (index.dir, directory)
         result = {}
@@ -87,15 +87,16 @@ class Index:
         if field:
             pattern = "%s/#%s/*=>*" % (linkDir, field)
 
-        for link in glob.glob(pattern):
-            matchStart = link.index("#") + 1
-            match = link[ matchStart : link.index("/", matchStart)]
-            docMatch = link[link.index("=>") + 2 :]
-            if not match in result:
-                result[match] = []
-            if highlight:
-                docMatch = (docMatch, self.snippet(docMatch, match, query, size))    
-            result[match].append(docMatch)
+        for i, link in enumerate(glob.glob(pattern)):
+            if paging == -1 or (paging != -1 and (i >= start and i < start + paging)):
+                matchStart = link.index("#") + 1
+                match = link[ matchStart : link.index("/", matchStart)]
+                docMatch = link[link.index("=>") + 2 :]
+                if not match in result:
+                    result[match] = []
+                if highlight:
+                    docMatch = (docMatch, self.snippet(docMatch, match, query, size))    
+                result[match].append(docMatch)
             
         return result
 
@@ -106,9 +107,8 @@ class Index:
         with open (path, "r") as f:
             text = f.read()
             if size != -1:
-                index = max(0, text.index(query))
+                index = max(0, re.search(query, text, re.IGNORECASE).span()[0])
                 text = "...%s..." % text[index : min(size, len(text))] # TODO check bounds ...
-            ignorecase = re.compile(query, re.IGNORECASE)
             return re.sub("(?i)(%s)" % query, r'<em class="hightlight">\1</em>', text)
 
     @staticmethod
@@ -197,12 +197,16 @@ if __name__ == '__main__':
     print "top [with highlight, size 10]", index.search("top", highlight = True, size = 10)
     print
     print "cat [with highlight, size = -1]", index.search("cat", highlight = True, size = -1)
-
+    print
+    print "cat [paging = 1]", index.search("cat", paging = 1)
+    print
+    print "cat [paging = 1, start = 1]", index.search("cat", paging = 1, start = 1)
  
- # TODO paging
  # TODO strip html tags and test with html/xml files
  # TODO add local files (encode file path as id)
  # TODO filter queries
+ # TODO exact phrases
+ # TODO multipe search words
  # TODO parent-child relationships
 
 
