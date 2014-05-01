@@ -23,15 +23,19 @@ class Utils:
                 os.remove(os.path.join(dir, f))
 
 
-class Document:
-    def __init__(self, id, text):
+class Document(object):
+    def __init__(self, id, text = None):
         self.vals = {}
         self.id = id
-        self.vals["text"] = text
+        if text:
+            self.vals["text"] = text
 
     def add(self, field, value):
         self.vals[field] = value
         return self
+
+    def get(self, field):
+        return self.vals[field]
 
 
 class IndexDocument():
@@ -77,7 +81,7 @@ class Index:
 
 
     # assume query to be one word for now - TODO
-    def search(self, query, field = None, highlight = False, size = 300, paging = -1, start = 0):
+    def search(self, query, field = None, highlight = False, size = 300, paging = -1, start = 0, full = False):
         directory = Utils.pathify(query.lower())
         linkDir = "%s/index/%s" % (index.dir, directory)
         result = {}
@@ -92,13 +96,36 @@ class Index:
                 matchStart = link.index("#") + 1
                 match = link[ matchStart : link.index("/", matchStart)]
                 docMatch = link[link.index("=>") + 2 :]
+                docId = docMatch
                 if not match in result:
                     result[match] = []
                 if highlight:
                     docMatch = (docMatch, self.snippet(docMatch, match, query, size))    
-                result[match].append(docMatch)
-            
+                
+                if full:
+                    result[match].append(self.load(docId, docMatch))
+                else: 
+                    result[match].append(docMatch)
+
         return result
+
+
+    def load(self, docId, docMatch):
+        doc = Document(docId)
+        self.loadIntoDoc(doc)
+        doc.match = docMatch[1]
+        return doc
+
+    def loadIntoDoc(self, doc):
+
+        dir = "%s/%s/#*/text" % (self.data_dir, doc.id)
+
+        for text in glob.glob(dir):
+            index = text.index("#")
+            field = text[index + 1 : text.index("/", index)]
+            with open(text, 'r') as f:
+                doc.vals[field] = f.read()
+        
 
     
     def snippet(self, docId, field, query, size):
@@ -214,8 +241,16 @@ if __name__ == '__main__':
     print
     print "class [with highlight]", index.search("class", highlight = True)
 
+    print
+    print "class [full][text][0].id =", index.search("class", full = True, highlight = True)["text"][0].id
+    print
+    print "class [full][text][0].match =", index.search("class", full = True, highlight = True)["text"][0].match
+    print
+    print "class [full][text][0].get('text') =", index.search("class", full = True, highlight = True)["text"][0].get('text')
+    print
+    print "class [full][text][0].get('type') =", index.search("class", full = True, highlight = True)["text"][0].get('type')
 
- # TODO option to return documents with original field texts
+
  # TODO filter queries
  # TODO add local files (encode file path as id)
  # TODO exact phrases
