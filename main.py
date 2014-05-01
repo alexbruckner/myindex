@@ -81,7 +81,7 @@ class Index:
 
 
     # assume query to be one word for now - TODO
-    def search(self, query, field = None, highlight = False, size = 300, paging = -1, start = 0, full = False):
+    def search(self, query, field = None, highlight = False, size = 300, paging = -1, start = 0, full = False, filter = None):
         directory = Utils.pathify(query.lower())
         linkDir = "%s/index/%s" % (index.dir, directory)
         result = {}
@@ -91,12 +91,25 @@ class Index:
         if field:
             pattern = "%s/#%s/*=>*" % (linkDir, field)
 
+        filterDir = None
+
+        if filter:
+            (filterField, filterValue) = filter
+            filterDir = "%s/index/%s/#%s" % (index.dir, Utils.pathify(filterValue.lower()), filterField)
+
+
         for i, link in enumerate(glob.glob(pattern)):
             if paging == -1 or (i >= start and i < start + paging):
                 matchStart = link.index("#") + 1
                 match = link[ matchStart : link.index("/", matchStart)]
                 docMatch = link[link.index("=>") + 2 :]
                 docId = docMatch
+
+                if filter:
+                   if not os.path.exists("%s/%s" % (filterDir, docId)):
+                      i = i - 1 # needs testing!!!!!!
+                      continue           
+
                 if not match in result:
                     result[match] = []
                 if highlight:
@@ -235,7 +248,7 @@ if __name__ == '__main__':
     print "cat [paging = 1, start = 1]", index.search("cat", paging = 1, start = 1)
     print
  
-    log.debug("adding test3 html document with text: <p>this is a paragraph</p><p class=\"class\">class: This is \nanother paragraph</p> anbd type: entry.")
+    log.debug("adding test3 html document with text: <p>this is a paragraph</p><p class=\"class\">class: This is \nanother paragraph</p> and type: entry.")
     index.add(Document("test3", "<p>this is a paragraph</p><p class=\"class\">class: This is \nanother paragraph</p>").add("type", "entry")) 
  
     print
@@ -249,9 +262,15 @@ if __name__ == '__main__':
     print "class [full][text][0].get('text') =", index.search("class", full = True, highlight = True)["text"][0].get('text')
     print
     print "class [full][text][0].get('type') =", index.search("class", full = True, highlight = True)["text"][0].get('type')
+    print
+
+    log.debug("adding test4 html document with text: class and type: other.")
+    index.add(Document("test4", "class").add("type", "other")) 
+    
+    print
+    print "class [filtered by type:entry]", index.search("class", filter = ("type", "entry"))
 
 
- # TODO filter queries
  # TODO add local files (encode file path as id)
  # TODO exact phrases
  # TODO multipe search words
