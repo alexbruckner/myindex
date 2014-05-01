@@ -98,7 +98,8 @@ class Index:
             filterDir = "%s/index/%s/#%s" % (index.dir, Utils.pathify(filterValue.lower()), filterField)
 
 
-        for i, link in enumerate(glob.glob(pattern)):
+        i = 0
+        for link in glob.glob(pattern):
             if paging == -1 or (i >= start and i < start + paging):
                 matchStart = link.index("#") + 1
                 match = link[ matchStart : link.index("/", matchStart)]
@@ -119,7 +120,7 @@ class Index:
                     result[match].append(self.load(docId, docMatch))
                 else: 
                     result[match].append(docMatch)
-
+            i = i + 1
         return result
 
 
@@ -270,8 +271,8 @@ if __name__ == '__main__':
     print
     print "class [filtered by type:entry]", index.search("class", filter = ("type", "entry"))
 
-
  # TODO add local files (encode file path as id)
+ # TODO proper test cases
  # TODO exact phrases
  # TODO multipe search words
  # TODO parent-child relationships
