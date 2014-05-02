@@ -22,6 +22,10 @@ class Utils:
             if re.search(pattern, f):
                 os.remove(os.path.join(dir, f))
 
+    @staticmethod
+    def toId(s):
+        return re.sub('[\W_]+', '-', s)
+
 
 class Document(object):
     def __init__(self, id, text = None):
@@ -78,6 +82,18 @@ class Index:
 
             # add words to index (ie create a link in word folder to data dir/doc.id)
             Index.addToIndex(indexDoc, field)
+
+    def addFile(self, file):
+        file = os.path.abspath(file)
+        with open (file, 'r') as f:
+            doc = Document(Utils.toId(file), f.read())
+            self.add(doc)
+
+    def addDir(self, dir):
+        dir = os.path.abspath(dir)
+        for root, dirs, files in os.walk(dir, topdown=False):
+            for file in files:
+                self.addFile(os.path.join(root, file))
 
 
     # assume query to be one word for now - TODO
@@ -265,17 +281,30 @@ if __name__ == '__main__':
     print "class [full][text][0].get('type') =", index.search("class", full = True, highlight = True)["text"][0].get('type')
     print
 
-    log.debug("adding test4 html document with text: class and type: other.")
+    log.debug("adding test4 document with text: class and type: other.")
     index.add(Document("test4", "class").add("type", "other")) 
     
     print
     print "class [filtered by type:entry]", index.search("class", filter = ("type", "entry"))
+    print 
 
- # TODO add local files (encode file path as id)
+    log.debug("loading a document from a specific file location: ./test/testfile");
+    index.addFile('./test/testfile')
+
+    print
+
+    log.debug("loading a few documents from a specific folder ./test");
+    index.addDir('./test')
+
+
  # TODO proper test cases
  # TODO exact phrases
+ # TODO fix filter + paging combo!!!
+ # TODO multiple fields, multiple filter fields
  # TODO multipe search words
  # TODO parent-child relationships
+ # TOFO remove index + data
+
 
 
 
