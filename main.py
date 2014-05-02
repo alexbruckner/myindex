@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import os, sys, re, glob, logging, string
 
 log = logging.getLogger('myindex')
@@ -296,7 +299,17 @@ if __name__ == '__main__':
     log.debug("loading a few documents from a specific folder ./test");
     index.addDir('./test')
 
+    print 
+    print "testfile", index.search("testfile")
+    print
 
+    print "à", index.search("à")
+
+
+
+
+
+ # TODO make utf-8 compliant.
  # TODO proper test cases
  # TODO exact phrases
  # TODO fix filter + paging combo!!!
