@@ -9,7 +9,7 @@ class Utils:
     
     @staticmethod
     def pathify(word, char = '/'):        
-        return char.join([c for c in word])
+        return char.join([str(ord(c)) for c in word])
 
     @staticmethod
     def makedirs(directory):
@@ -182,10 +182,7 @@ class Index:
         # strip html tags
         words = re.sub('<[^<]+?>', ' ', words)
 
-        aplhanumericOnlyPattern = re.compile('[\W_]+', re.UNICODE)
-        alphaNuymOnly = re.sub(aplhanumericOnlyPattern, ' ', words)
-
-        for word in alphaNuymOnly.lower().split():
+        for word in words.lower().split():
 
             count[word] = 1
 
@@ -237,6 +234,15 @@ class Index:
 # simple test
 if __name__ == '__main__':
 
+
+    import shutil
+    shutil.rmtree('./data')
+    shutil.rmtree('./index')
+
+
+
+
+
     index = Index()
     print "dir is %s" % index.dir
 
@@ -274,15 +280,15 @@ if __name__ == '__main__':
     print
     print "class [with highlight]", index.search("class", highlight = True)
 
-    print
-    print "class [full][text][0].id =", index.search("class", full = True, highlight = True)["text"][0].id
-    print
-    print "class [full][text][0].match =", index.search("class", full = True, highlight = True)["text"][0].match
-    print
-    print "class [full][text][0].get('text') =", index.search("class", full = True, highlight = True)["text"][0].get('text')
-    print
-    print "class [full][text][0].get('type') =", index.search("class", full = True, highlight = True)["text"][0].get('type')
-    print
+    # print
+    # print "class [full][text][0].id =", index.search("class", full = True, highlight = True)["text"][0].id
+    # print
+    # print "class [full][text][0].match =", index.search("class", full = True, highlight = True)["text"][0].match
+    # print
+    # print "class [full][text][0].get('text') =", index.search("class", full = True, highlight = True)["text"][0].get('text')
+    # print
+    # print "class [full][text][0].get('type') =", index.search("class", full = True, highlight = True)["text"][0].get('type')
+    # print
 
     log.debug("adding test4 document with text: class and type: other.")
     index.add(Document("test4", "class").add("type", "other")) 
@@ -305,8 +311,7 @@ if __name__ == '__main__':
 
     print "à", index.search("à")
 
-
-
+    log.debug("done")
 
 
  # TODO make utf-8 compliant.
