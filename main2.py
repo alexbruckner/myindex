@@ -43,6 +43,14 @@ class IndexDocument(object):
     def __repr__(self):
         return "<Doc: %s>" % self.id
 
+# TODO
+class SearchResult(object):
+    def __init__(self, query, result = {}):
+        self.query = query
+        self.result = result
+
+    def __repr__(self):
+        return "%s %s" % (self.query, self.result)
 
 class Index:
     def __init__(self):
@@ -94,7 +102,7 @@ class Index:
             if not match in result:
                 result[match] = []
             result[match].append(IndexDocument(self, path[second + 1 :]))
-        return result
+        return SearchResult(query, result)
 
     def addDir(self, dir):
         dir = os.path.abspath(dir)
@@ -132,9 +140,9 @@ if __name__ == '__main__':
 
 	# index.addDir('./test')
 
-	print "a", index.search("a")
-	print "à", index.search("à")
-	print "á", index.search("á")
+	print index.search("a")
+	print index.search("à")
+	print index.search("á")
 
 
 
