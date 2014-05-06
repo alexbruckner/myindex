@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
+import os, re, string
 
 class Utils:
     
     @staticmethod
     def pathify(word, char = '/'):        
-        return char.join([str(ord(c)) for c in word])
+        return char.join([str(ord(c)) for c in word.lower()])
 
     @staticmethod
     def makedirs(directory):
@@ -55,13 +55,32 @@ class Index:
     		field_file = "%s/%s" % (doc_dir, field)	
     		with open(field_file, 'w') as f:
     			f.write(doc.vals[field])	# TODO do not store data, just index on id as an option?
+    			self.index(doc.id, doc_dir, field, doc.vals[field])
 
-    	# index data  
 
+    def index(self, doc_id, doc_dir, field, value):
+    	# strip html
+    	words = re.sub('<[^<]+?>', ' ', value)
 
+    	# strip punctuation
+    	words = words.translate(string.maketrans("",""), string.punctuation)
+
+    	for word in words.split(' '): 
+    		if len(word) > 0:
+    			index_dir = "%s/%s" % (self.index_dir, Utils.pathify(word))
+    			Utils.makedirs(index_dir)
+    			link = "%s/%s" % (index_dir, doc_id)
+    			try:
+    				if not os.path.exists(link):
+	    				os.symlink(doc_dir, link)
+    			except OSError as error: print error, link
+
+    	# for word in words:
+    		# print word
 
     def search(self, query):
-    	None	
+    	index_dir = "%s/%s" % (self.index_dir, Utils.pathify(query))
+    	return os.listdir(index_dir)
 
 
 # simple test
@@ -71,7 +90,7 @@ if __name__ == '__main__':
 	shutil.rmtree('./data')
 	shutil.rmtree('./index')
 
-	doc = Document("test", "a à")
+	doc = Document("test", "a à <p>para,     gráph.</p>")
 	doc2 = Document("test2", "à á")
 
 
