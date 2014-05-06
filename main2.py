@@ -71,15 +71,20 @@ class Index:
     			Utils.makedirs(index_dir)
     			link = "%s/%s" % (index_dir, doc_id)
     			try:
-    				if not os.path.exists(link):
+    				if not os.path.exists(link):    # TODO hit count 
 	    				os.symlink(doc_dir, link)
     			except OSError as error: print error, link
 
     def search(self, query):
     	index_dir = "%s/%s/#*/*" % (self.index_dir, Utils.pathify(query))
-    	result = []
+    	result = {}
         for path in glob.glob(index_dir):
-            result.append(path[path.index("#"):])
+            first = path.index("#") + 1
+            second = path.index("/", first)
+            match = path[first:second]
+            if not match in result:
+                result[match] = []
+            result[match].append(path[second + 1 :])
         return result
 
     def addDir(self, dir):
