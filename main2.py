@@ -35,6 +35,15 @@ class Document(object):
     def get(self, field):
         return self.vals[field]
 
+class IndexDocument(object):
+    def __init__(self, index, id):
+        self.index = index
+        self.id = id
+
+    def __repr__(self):
+        return "<Doc: %s>" % self.id
+
+
 class Index:
     def __init__(self):
         self.dir = os.getcwd()
@@ -84,7 +93,7 @@ class Index:
             match = path[first:second]
             if not match in result:
                 result[match] = []
-            result[match].append(path[second + 1 :])
+            result[match].append(IndexDocument(self, path[second + 1 :]))
         return result
 
     def addDir(self, dir):
