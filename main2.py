@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os, re, string
+import os, re, string, shutil
 
 class Utils:
     
@@ -65,7 +65,7 @@ class Index:
     	# strip punctuation
     	words = words.translate(string.maketrans("",""), string.punctuation)
 
-    	for word in words.split(' '): 
+    	for word in words.split(): 
     		if len(word) > 0:
     			index_dir = "%s/%s" % (self.index_dir, Utils.pathify(word))
     			Utils.makedirs(index_dir)
@@ -75,29 +75,47 @@ class Index:
 	    				os.symlink(doc_dir, link)
     			except OSError as error: print error, link
 
-    	# for word in words:
-    		# print word
 
     def search(self, query):
     	index_dir = "%s/%s" % (self.index_dir, Utils.pathify(query))
     	return os.listdir(index_dir)
 
+    def addDir(self, dir):
+        dir = os.path.abspath(dir)
+        for root, dirs, files in os.walk(dir, topdown=False):
+            for file in files:
+                self.addFile(os.path.join(root, file))
+
+    def addFile(self, file): 
+    	file = os.path.abspath(file)
+        doc_id = Utils.toId(file)
+        doc_dir = "%s/%s" % (self.data_dir, doc_id)
+        Utils.makedirs(doc_dir)
+
+        shutil.copyfile(file, "%s/text" % doc_dir)
+        value = None
+        with open(file, 'r') as f:
+        	value = f.read()
+
+        self.index(doc_id, doc_dir, 'text', value)
+
 
 # simple test
 if __name__ == '__main__':
-
-	import shutil
+	
 	shutil.rmtree('./data')
 	shutil.rmtree('./index')
 
 	doc = Document("test", "a à <p>para,     gráph.</p>")
 	doc2 = Document("test2", "à á")
 
-
 	index = Index()
 
 	index.add(doc)
 	index.add(doc2)
+
+	index.addDir('./test')
+
 
 	print "a", index.search("a")
 	print "à", index.search("à")
