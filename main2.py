@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os, re, string, shutil
+import os, re, string, shutil, glob
 
 class Utils:
     
@@ -67,7 +67,7 @@ class Index:
 
     	for word in words.split(): 
     		if len(word) > 0:
-    			index_dir = "%s/%s" % (self.index_dir, Utils.pathify(word))
+    			index_dir = "%s/%s/#%s" % (self.index_dir, Utils.pathify(word), field)
     			Utils.makedirs(index_dir)
     			link = "%s/%s" % (index_dir, doc_id)
     			try:
@@ -75,10 +75,12 @@ class Index:
 	    				os.symlink(doc_dir, link)
     			except OSError as error: print error, link
 
-
     def search(self, query):
-    	index_dir = "%s/%s" % (self.index_dir, Utils.pathify(query))
-    	return os.listdir(index_dir)
+    	index_dir = "%s/%s/#*/*" % (self.index_dir, Utils.pathify(query))
+    	result = []
+        for path in glob.glob(index_dir):
+            result.append(path[path.index("#"):])
+        return result
 
     def addDir(self, dir):
         dir = os.path.abspath(dir)
@@ -106,16 +108,15 @@ if __name__ == '__main__':
 	shutil.rmtree('./data')
 	shutil.rmtree('./index')
 
-	doc = Document("test", "a à <p>para,     gráph.</p>")
-	doc2 = Document("test2", "à á")
+	doc = Document("test", "a à <p>para,     gráph. ab </p>")
+	doc2 = Document("test2", "à á").add("type", "a")
 
 	index = Index()
 
 	index.add(doc)
 	index.add(doc2)
 
-	index.addDir('./test')
-
+	# index.addDir('./test')
 
 	print "a", index.search("a")
 	print "à", index.search("à")
