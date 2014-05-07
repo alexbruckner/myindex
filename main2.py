@@ -77,7 +77,10 @@ class SearchResult(object):
         return "%s %s" % (self.query, self.result)
 
     def doc_ids(self):
-        return [ doc.id for doc in self.result.values()[0]]
+        try:
+            return [ doc.id for doc in self.result.values()[0]]
+        except: 
+            return []
 
     def docs(self):
         return self.result.values()[0]
@@ -137,7 +140,7 @@ class Index:
             for filter in filters:
                 filter_result = self.search(query = filter[1], fields = (filter[0],))
                 if len(filter_list) > 0:
-                    filter_list.union(filter_result.doc_ids())
+                    filter_list = filter_list.intersection(filter_result.doc_ids())
                 else:
                     filter_list = set(filter_result.doc_ids())
 
