@@ -61,6 +61,9 @@ class SearchResult(object):
     def __repr__(self):
         return "%s %s" % (self.query, self.result)
 
+    def doc_ids(self):
+        return [ doc.id for doc in self.result.values()[0]]
+
 class Index:
     def __init__(self):
         self.dir = os.getcwd()
@@ -103,12 +106,22 @@ class Index:
 
         encountered.clear()
 
-    def search(self, query, fields = (), filter = ()):
+    def search(self, query, fields = (), filters = ()):
         pathified_query = Utils.pathify(query)
         
     	result = {}
-        specific_fields = len(fields) > 0;
+        specific_fields = len(fields) > 0
         index_dirs = []
+        specific_filters = len(filters) > 0
+        filter_list = set()
+
+        if specific_filters:
+            for filter in filters:
+                filter_result = self.search(query = filter[1], fields = (filter[0],))
+                if len(filter_list) > 0:
+                    filter_list.union(filter_result.doc_ids())
+                else:
+                    filter_list = set(filter_result.doc_ids())
 
         if specific_fields:
             for field in fields:
@@ -124,10 +137,12 @@ class Index:
             first = path.index("#") + 1
             second = path.index("/", first)
             match = path[first:second]
-            if not match in result:
-                result[match] = []
-            result[match].append(IndexDocument(self, path[second + 1 :]))
-        return SearchResult(Query(query, fields, filter), result)
+            doc_id = path[second + 1 :]
+            if not specific_filters or (doc_id in filter_list):
+                if not match in result:
+                    result[match] = []
+                result[match].append(IndexDocument(self, doc_id))
+        return SearchResult(Query(query, fields, filters), result)
 
     def addDir(self, dir):
         dir = os.path.abspath(dir)
@@ -172,7 +187,7 @@ if __name__ == '__main__':
 
         print index.search("a", fields = ('text',)) # needs comma otherwise passed as string!!! Wat?!
 
-        print index.search("a", filter = (('type', 'a'), ('type2', 'b')))
+        print index.search("a", filters = (('type', 'a'), ('type2', 'b')))
 
     # TODO highlight = False, size = 300, paging = -1, start = 0, full = False, filter = None
 
