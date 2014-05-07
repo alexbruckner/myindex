@@ -43,6 +43,14 @@ class IndexDocument(object):
     def __repr__(self):
         return "<Doc: %s>" % self.id
 
+class Query(object):
+    def __init__(self, query, fields = ()):
+        self.query = query
+        self.fields = fields
+
+    def __repr__(self):
+        return "%s [fields = %s]" % (self.query, self.fields)
+
 # TODO
 class SearchResult(object):
     def __init__(self, query, result = {}):
@@ -92,17 +100,19 @@ class Index:
 	    				os.symlink(doc_dir, link)
     			except OSError as error: print error, link
 
-    def search(self, query):
-    	index_dir = "%s/%s/#*/*" % (self.index_dir, Utils.pathify(query))
+    def search(self, query, fields = ()):
+        index_dir = "%s/%s/#*/*" % (self.index_dir, Utils.pathify(query))
     	result = {}
+        specific_fields = len(fields) > 0;
         for path in glob.glob(index_dir):
             first = path.index("#") + 1
             second = path.index("/", first)
             match = path[first:second]
-            if not match in result:
-                result[match] = []
-            result[match].append(IndexDocument(self, path[second + 1 :]))
-        return SearchResult(query, result)
+            if not specific_fields or match in fields:
+                if not match in result:
+                    result[match] = []
+                result[match].append(IndexDocument(self, path[second + 1 :]))
+        return SearchResult(Query(query, fields), result)
 
     def addDir(self, dir):
         dir = os.path.abspath(dir)
@@ -144,5 +154,7 @@ if __name__ == '__main__':
 	print index.search("à")
 	print index.search("á")
 
+        print index.search("a", fields = ('text'))
 
+    # TODO highlight = False, size = 300, paging = -1, start = 0, full = False, filter = None
 
