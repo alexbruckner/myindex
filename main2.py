@@ -44,12 +44,13 @@ class IndexDocument(object):
         return "<Doc: %s>" % self.id
 
 class Query(object):
-    def __init__(self, query, fields = ()):
+    def __init__(self, query, fields = (), filter = ()):
         self.query = query
         self.fields = fields
+        self.filter = filter
 
     def __repr__(self):
-        return "%s [fields = %s]" % (self.query, self.fields)
+        return "%s [fields = %s, filter = %s]" % (self.query, self.fields, self.filter)
 
 # TODO
 class SearchResult(object):
@@ -100,19 +101,33 @@ class Index:
     			os.symlink(doc_dir, link)
                 encountered[word] = 1
 
-    def search(self, query, fields = ()):
-        index_dir = "%s/%s/#*/*" % (self.index_dir, Utils.pathify(query))
+        encountered.clear()
+
+    def search(self, query, fields = (), filter = ()):
+        pathified_query = Utils.pathify(query)
+        
     	result = {}
         specific_fields = len(fields) > 0;
-        for path in glob.glob(index_dir):
+        index_dirs = []
+
+        if specific_fields:
+            for field in fields:
+                index_dirs.append("%s/%s/#%s/*" % (self.index_dir, pathified_query, field))
+        else:    
+            index_dirs.append("%s/%s/#*/*" % (self.index_dir, pathified_query))
+            
+        file_list = []    
+        for index_dir in index_dirs:
+            file_list += glob.glob(index_dir)
+
+        for path in file_list:
             first = path.index("#") + 1
             second = path.index("/", first)
             match = path[first:second]
-            if not specific_fields or match in fields:
-                if not match in result:
-                    result[match] = []
-                result[match].append(IndexDocument(self, path[second + 1 :]))
-        return SearchResult(Query(query, fields), result)
+            if not match in result:
+                result[match] = []
+            result[match].append(IndexDocument(self, path[second + 1 :]))
+        return SearchResult(Query(query, fields, filter), result)
 
     def addDir(self, dir):
         dir = os.path.abspath(dir)
@@ -141,7 +156,7 @@ if __name__ == '__main__':
 	shutil.rmtree('./index')
 
 	doc = Document("test", "a à <p>para,     gráph. ab </p>")
-	doc2 = Document("test2", "à á").add("type", "a")
+	doc2 = Document("test2", "à á").add("type", "a").add("type2", "b")
 
 	index = Index()
 
@@ -154,7 +169,10 @@ if __name__ == '__main__':
 	print index.search("à")
 	print index.search("á")
 
-        print index.search("a", fields = ('text'))
+
+        print index.search("a", fields = ('text',)) # needs comma otherwise passed as string!!! Wat?!
+
+        print index.search("a", filter = (('type', 'a'), ('type2', 'b')))
 
     # TODO highlight = False, size = 300, paging = -1, start = 0, full = False, filter = None
 
