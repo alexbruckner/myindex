@@ -21,6 +21,13 @@ class Utils:
     def toId(s):
         return re.sub('[\W_]+', '-', s)
 
+    @staticmethod
+    def symlink(doc_dir, link):
+        try:
+            if not os.path.exists(link):
+                os.symlink(doc_dir, link)    
+        except OSError as error: print error, doc_dir, link
+
 class Document(object):
     def __init__(self, id, text = None):
         self.vals = {}
@@ -122,7 +129,7 @@ class Index:
     			index_dir = "%s/%s/#%s" % (self.index_dir, Utils.pathify(word), field)
     			Utils.makedirs(index_dir)
     			link = "%s/%s" % (index_dir, doc_id)
-    			os.symlink(doc_dir, link)
+                Utils.symlink(doc_dir, link)
                 encountered[word] = 1
 
         encountered.clear()
@@ -211,8 +218,11 @@ if __name__ == '__main__':
         print index.search("a", fields = ('text',)) # needs comma otherwise passed as string!!! Wat?!
 
         print index.search("a", filters = (('type', 'a'), ('type2', 'b')))
+        print index.search("a", filters = (('type', 'a'), ('type2', 'c')))
 
         print index.load("test").get('text')
+
+        print index.search("absolve")
 
     # TODO highlight = False, size = 300, paging = -1, start = 0 multiple words in query
 
