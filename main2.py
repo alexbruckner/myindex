@@ -90,15 +90,15 @@ class Index:
     	# strip punctuation
     	words = words.translate(string.maketrans("",""), string.punctuation)
 
+        encountered = {}
+
     	for word in words.split(): 
-    		if len(word) > 0:
+    		if len(word) > 0 and word not in encountered:
     			index_dir = "%s/%s/#%s" % (self.index_dir, Utils.pathify(word), field)
     			Utils.makedirs(index_dir)
     			link = "%s/%s" % (index_dir, doc_id)
-    			try:
-    				if not os.path.exists(link):    # TODO hit count 
-	    				os.symlink(doc_dir, link)
-    			except OSError as error: print error, link
+    			os.symlink(doc_dir, link)
+                encountered[word] = 1
 
     def search(self, query, fields = ()):
         index_dir = "%s/%s/#*/*" % (self.index_dir, Utils.pathify(query))
