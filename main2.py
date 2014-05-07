@@ -39,9 +39,24 @@ class IndexDocument(object):
     def __init__(self, index, id):
         self.index = index
         self.id = id
+        self.doc_dir = '%s/%s' % (self.index.data_dir, self.id)
+        self.vals = {}
 
     def __repr__(self):
         return "<Doc: %s>" % self.id
+
+    def fields(self):
+        return os.listdir(self.doc_dir)
+
+    def get(self, field):
+        if not field in self.vals:
+            # load
+            field_file = "%s/%s" % (self.doc_dir, field)
+            with open(field_file, 'r') as f:
+                self.vals[field] = f.read()
+
+        return self.vals[field]
+
 
 class Query(object):
     def __init__(self, query, fields = (), filter = ()):
@@ -63,6 +78,9 @@ class SearchResult(object):
 
     def doc_ids(self):
         return [ doc.id for doc in self.result.values()[0]]
+
+    def docs(self):
+        return self.result.values()[0]
 
 class Index:
     def __init__(self):
@@ -163,6 +181,8 @@ class Index:
 
         self.index(doc_id, doc_dir, 'text', value)
 
+    def load(self, index_doc):
+        return IndexDocument(self, index_doc)
 
 # simple test
 if __name__ == '__main__':
@@ -189,5 +209,7 @@ if __name__ == '__main__':
 
         print index.search("a", filters = (('type', 'a'), ('type2', 'b')))
 
-    # TODO highlight = False, size = 300, paging = -1, start = 0, full = False, filter = None
+        print index.load("test").get('text')
+
+    # TODO highlight = False, size = 300, paging = -1, start = 0 multiple words in query
 
