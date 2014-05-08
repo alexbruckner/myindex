@@ -37,11 +37,14 @@ class Document(object):
 		return self.vals[field]
 
 class IndexDocument(object):
-	def __init__(self, index, id):
+	def __init__(self, index, id, lazy = True):
 		self.index = index
 		self.id = id
 		self.doc_dir = '%s/%s' % (self.index.data_dir, self.id)
 		self.vals = {}
+		if not lazy:
+			for field in self.fields():
+				self.get(field)
 
 	def __repr__(self):
 		return "<Doc: %s>" % self.id
@@ -187,11 +190,7 @@ class Index:
 		self.index(doc_id, doc_dir, 'text', value)
 
 	def load(self, index_doc, lazy = True):
-		doc = IndexDocument(self, index_doc)
-		if not lazy:
-			for field in doc.fields():
-				doc.get(field)
-		return doc
+		return IndexDocument(self, index_doc, lazy = lazy)
 
 # simple test
 if __name__ == '__main__':
