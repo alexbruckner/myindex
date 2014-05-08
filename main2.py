@@ -3,6 +3,10 @@
 
 import os, re, string, shutil, glob, json
 
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
+
 class Utils:
 	
 	@staticmethod
@@ -69,6 +73,7 @@ class IndexDocument(object):
 		if self.lazy:
 			self.load()
 		return json.dumps((self.id, self.vals), ensure_ascii=False)
+
 
 class Query(object):
 	def __init__(self, query, fields = (), filter = ()):
@@ -197,8 +202,21 @@ class Index:
 
 		self.index(doc_id, doc_dir, 'text', value)
 
-	def load(self, index_doc, lazy = True):
-		return IndexDocument(self, index_doc, lazy = lazy)
+	def load(self, doc_id, lazy = True):
+		return IndexDocument(self, doc_id, lazy = lazy)
+
+	def json(self, doc_id):
+		return IndexDocument(self, doc_id, lazy = False).json()
+
+	def doc(self, json_str):
+		data = json.loads(json_str)
+		doc_id = data[0]
+		fields = data[1]
+		doc = IndexDocument(self, doc_id, lazy = False)
+		for field in data[1]:
+			doc.vals[field] = data[1][field]
+		return doc
+
 
 # simple test
 if __name__ == '__main__':
@@ -224,9 +242,10 @@ if __name__ == '__main__':
 	print index.search("a", filters = (('type', 'a'), ('type2', 'b')))
 	print index.search("a", filters = (('type', 'a'), ('type2', 'c')))
 
-	print index.load("test").get('text')
+	print index.load("test", lazy = True).get('text')
 
-	print "json: ", index.load("test").json()
+	print "json: ", index.json("test")
+	print "doc:  ", index.doc(index.json("test"))
 
 	# TODO highlight = False, size = 300, paging = -1, start = 0 multiple words in query
 
