@@ -68,8 +68,7 @@ class IndexDocument(object):
 	def json(self):
 		if self.lazy:
 			self.load()
-		return json.dumps((self.id, self.vals))
-
+		return json.dumps((self.id, self.vals), ensure_ascii=False)
 
 class Query(object):
 	def __init__(self, query, fields = (), filter = ()):
@@ -228,8 +227,6 @@ if __name__ == '__main__':
 	print index.load("test").get('text')
 
 	print "json: ", index.load("test").json()
-
-
 
 	# TODO highlight = False, size = 300, paging = -1, start = 0 multiple words in query
 
