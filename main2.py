@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os, re, string, shutil, glob
+import os, re, string, shutil, glob, json
 
 class Utils:
 	
@@ -42,9 +42,9 @@ class IndexDocument(object):
 		self.id = id
 		self.doc_dir = '%s/%s' % (self.index.data_dir, self.id)
 		self.vals = {}
+		self.lazy = lazy
 		if not lazy:
-			for field in self.fields():
-				self.get(field)
+			self.load()
 
 	def __repr__(self):
 		return "<Doc: %s>" % self.id
@@ -60,6 +60,15 @@ class IndexDocument(object):
 				self.vals[field] = f.read()
 
 		return self.vals[field]
+
+	def load(self):
+		for field in self.fields():
+			self.get(field)
+
+	def json(self):
+		if self.lazy:
+			self.load()
+		return json.dumps((self.id, self.vals))
 
 
 class Query(object):
@@ -219,6 +228,10 @@ if __name__ == '__main__':
 	print index.search("a", filters = (('type', 'a'), ('type2', 'c')))
 
 	print index.load("test").get('text')
+
+	print "json: ", index.load("test").json()
+
+
 
 	# TODO highlight = False, size = 300, paging = -1, start = 0 multiple words in query
 
