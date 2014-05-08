@@ -253,8 +253,8 @@ class Index:
 		return doc
 
 	def reset(self):
-		shutil.rmtree('./data')
-		shutil.rmtree('./index')
+		shutil.rmtree(self.data_dir)
+		shutil.rmtree(self.index_dir)
 
 # simple test
 if __name__ == '__main__':
