@@ -207,13 +207,11 @@ if __name__ == '__main__':
 	shutil.rmtree('./data')
 	shutil.rmtree('./index')
 
-	doc = Document("test", "a à <p>para,     gráph. ab </p>")
-	doc2 = Document("test2", "à á").add("type", "a").add("type2", "b")
-
 	index = Index()
 
-	index.add(doc)
-	index.add(doc2)
+	index.add(Document("test", "a à <p>para,     gráph. ab </p>"))
+	index.add(Document("test2", "à á").add("type", "a").add("type2", "b"))
+	index.add(Document("test3", "a b c").add("muh", "a b c"))
 
 	# index.addDir('./test')
 
@@ -222,7 +220,7 @@ if __name__ == '__main__':
 	print index.search("á")
 
 
-	print index.search("a", fields = ('text',)) # needs comma otherwise passed as string!!! Wat?!
+	print index.search("a", fields = ('text',))
 
 	print index.search("a", filters = (('type', 'a'), ('type2', 'b')))
 	print index.search("a", filters = (('type', 'a'), ('type2', 'c')))
