@@ -217,14 +217,16 @@ class Index:
 			doc.vals[field] = data[1][field]
 		return doc
 
+	def reset(self):
+		shutil.rmtree('./data')
+		shutil.rmtree('./index')
 
 # simple test
 if __name__ == '__main__':
 	
-	shutil.rmtree('./data')
-	shutil.rmtree('./index')
-
 	index = Index()
+
+	index.reset()
 
 	index.add(Document("test", "a à <p>para,     gráph. ab </p>"))
 	index.add(Document("test2", "à á").add("type", "a").add("type2", "b"))
