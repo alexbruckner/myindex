@@ -186,8 +186,12 @@ class Index:
 
 		self.index(doc_id, doc_dir, 'text', value)
 
-	def load(self, index_doc):
-		return IndexDocument(self, index_doc)
+	def load(self, index_doc, lazy = True):
+		doc = IndexDocument(self, index_doc)
+		if not lazy:
+			for field in doc.fields():
+				doc.get(field)
+		return doc
 
 # simple test
 if __name__ == '__main__':
