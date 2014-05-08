@@ -49,6 +49,7 @@ class IndexDocument(object):
 		self.lazy = lazy
 		if not lazy:
 			self.load()
+		self.matches = set()
 
 	def __repr__(self):
 		return "<Doc: %s>" % self.id
@@ -74,15 +75,26 @@ class IndexDocument(object):
 			self.load()
 		return json.dumps((self.id, self.vals), ensure_ascii=False)
 
+	def match(self, match):
+		self.matches.add(match)
+		return self
+
+	def __hash__(self):
+		return hash(self.id)
+
+	def __eq__(self, another):
+		return hash(self) == hash(another)
+
 
 class Query(object):
-	def __init__(self, query, fields = (), filter = ()):
+	def __init__(self, query, fields = (), filter = (), paging = ()):
 		self.query = query
 		self.fields = fields
 		self.filter = filter
+		self.paging = paging
 
 	def __repr__(self):
-		return "%s [fields = %s, filter = %s]" % (self.query, self.fields, self.filter)
+		return "%s [fields = %s, filter = %s, paging = %s]" % (self.query, self.fields, self.filter, self.paging)
 
 # TODO
 class SearchResult(object):
@@ -93,14 +105,6 @@ class SearchResult(object):
 	def __repr__(self):
 		return "%s %s" % (self.query, self.result)
 
-	def doc_ids(self):
-		try:
-			return [ doc.id for doc in self.result.values()[0]]
-		except: 
-			return []
-
-	def docs(self):
-		return self.result.values()[0]
 
 class Index:
 	def __init__(self):
@@ -145,22 +149,23 @@ class Index:
 
 		encountered.clear()
 
-	def search(self, query, fields = (), filters = ()):
+	def search(self, query, fields = (), filters = (), paging = ()):
 		pathified_query = Utils.pathify(query)
 		
-		result = {}
+		result = set()
 		specific_fields = len(fields) > 0
 		index_dirs = []
 		specific_filters = len(filters) > 0
 		filter_list = set()
+		# specific_page = len(paging) > 0
 
 		if specific_filters:
 			for filter in filters:
 				filter_result = self.search(query = filter[1], fields = (filter[0],))
 				if len(filter_list) > 0:
-					filter_list = filter_list.intersection(filter_result.doc_ids())
+					filter_list = filter_list.intersection(filter_result.result)
 				else:
-					filter_list = set(filter_result.doc_ids())
+					filter_list = set(filter_result.result)
 
 		if specific_fields:
 			for field in fields:
@@ -172,16 +177,38 @@ class Index:
 		for index_dir in index_dirs:
 			file_list += glob.glob(index_dir)
 
+
+		# page_count_start = None
+		# page_count_end = None
+
+		# if specific_page:
+		# 	page_start = paging[0]
+		# 	page_size = paging[1]
+
+		# 	page_count_start = page_start * page_size
+		# 	page_count_end = page_count_start + page_size
+
+		tmp_refs = {}
+
 		for path in file_list:
-			first = path.index("#") + 1
-			second = path.index("/", first)
-			match = path[first:second]
-			doc_id = path[second + 1 :]
-			if not specific_filters or (doc_id in filter_list):
-				if not match in result:
-					result[match] = []
-				result[match].append(IndexDocument(self, doc_id))
-		return SearchResult(Query(query, fields, filters), result)
+				first = path.index("#") + 1
+				second = path.index("/", first)
+				match = path[first:second]
+				doc_id = path[second + 1 :]
+				if not specific_filters or (doc_id in filter_list):
+
+					if doc_id in tmp_refs:
+						index_doc = tmp_refs[doc_id]
+					else:
+						index_doc = IndexDocument(self, doc_id)
+						tmp_refs[doc_id] = index_doc
+						result.add(index_doc)
+
+					index_doc.match(match)
+
+		tmp_refs.clear()
+
+		return SearchResult(Query(query, fields, filters, paging), result)
 
 	def addDir(self, dir):
 		dir = os.path.abspath(dir)
@@ -248,6 +275,7 @@ if __name__ == '__main__':
 
 	print "json: ", index.json("test")
 	print "doc:  ", index.doc(index.json("test"))
+
 
 	# TODO highlight = False, size = 300, paging = -1, start = 0 multiple words in query
 
