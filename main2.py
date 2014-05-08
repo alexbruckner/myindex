@@ -157,7 +157,7 @@ class Index:
 		index_dirs = []
 		specific_filters = len(filters) > 0
 		filter_list = set()
-		# specific_page = len(paging) > 0
+		specific_page = len(paging) > 0
 
 		if specific_filters:
 			for filter in filters:
@@ -177,19 +177,16 @@ class Index:
 		for index_dir in index_dirs:
 			file_list += glob.glob(index_dir)
 
+		if specific_page:
+			page_start = paging[0]
+			page_size = paging[1]
 
-		# page_count_start = None
-		# page_count_end = None
-
-		# if specific_page:
-		# 	page_start = paging[0]
-		# 	page_size = paging[1]
-
-		# 	page_count_start = page_start * page_size
-		# 	page_count_end = page_count_start + page_size
+			page_count_start = page_start * page_size
+			page_count_end = page_count_start + page_size
 
 		tmp_refs = {}
 
+		i = 0
 		for path in file_list:
 				first = path.index("#") + 1
 				second = path.index("/", first)
@@ -202,7 +199,18 @@ class Index:
 					else:
 						index_doc = IndexDocument(self, doc_id)
 						tmp_refs[doc_id] = index_doc
+						
+						if specific_page: 
+							i  = i + 1
+
+							if len(result) >= page_size: 
+								break
+							
+							if i <= page_count_start:
+								continue
+
 						result.add(index_doc)
+							
 
 					index_doc.match(match)
 
@@ -276,6 +284,10 @@ if __name__ == '__main__':
 	print "json: ", index.json("test")
 	print "doc:  ", index.doc(index.json("test"))
 
+	print index.search("a", paging = (0, 3))
+	print index.search("a", paging = (0, 1))
+	print index.search("a", paging = (1, 1))
+	print index.search("a", paging = (2, 1))
 
 	# TODO highlight = False, size = 300, paging = -1, start = 0 multiple words in query
 
